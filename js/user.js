@@ -3,6 +3,8 @@
 // global to hold the User instance of the currently-logged-in user
 let currentUser;
 
+//hide signup/login form when you are logged in
+
 /******************************************************************************
  * User login/signup/login
  */
@@ -107,10 +109,26 @@ function saveUserCredentialsInLocalStorage() {
  * - generate the user profile part of the page
  */
 
-function updateUIOnUserLogin() {
+async function updateUIOnUserLogin() {
   console.debug("updateUIOnUserLogin");
 
+  hidePageComponents();
+
+  putStoriesOnPage();
   $allStoriesList.show();
 
   updateNavOnLogin();
+  generateUserProfile();
+}
+
+function generateUserProfile() {
+  console.debug("creating profile")
+
+  $("#profile-name").text(currentUser.name)
+  $("#profile-username").text(currentUser.username)
+  $("#profile-account-date").text(currentUser.createdAt.slice(0, 10))
+}
+
+function isFavorite(story) {
+  return this.favorites.find(favStory => story.storyId === faveStory.storyId)
 }

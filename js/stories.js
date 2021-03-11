@@ -30,6 +30,9 @@ async function submitNewStory(evt) {
 
   const $story = await storyList.addStory(currentUser, storyData)
   $allStoriesList.prepend($story)
+
+  $submitForm.slideUp("slow");
+  $submitForm.trigger("reset");
 }
 
 $submitForm.on("submit", submitNewStory)
@@ -41,13 +44,17 @@ $submitForm.on("submit", submitNewStory)
  * Returns the markup for the story.
  */
 
-function generateStoryMarkup(story) {
+function generateStoryMarkup(story, showDeleteBtn = false) {
   // console.debug("generateStoryMarkup", story);
 
   const hostName = story.getHostName();
+  const showStar = Boolean(currentUser);
+
   return $(`
       <li id="${story.storyId}">
-        <a href="${story.url}" target="a_blank" class="story-link">
+      ${showDeleteBtn ? getDeleteBtnHTML() : ""}
+      ${showStar ? getStarHTML(story, currentUser) : ""}
+      <a href="${story.url}" target="a_blank" class="story-link">
           ${story.title}
         </a>
         <small class="story-hostname">(${hostName})</small>
@@ -56,6 +63,25 @@ function generateStoryMarkup(story) {
       </li>
     `);
 }
+
+// these two lines are causing my code to flip out
+
+function getDeleteBtnHTML() {
+  return `
+      <span class="trash-can">
+        <i class="fas fa-trash-alt"></i>
+      </span>`;
+}
+
+function getStarHTML(story, user) {
+  const isFavorite = user.isFavorite(story);
+  const starType = isFavorite ? "fas" : "far";
+  return `
+      <span class="star">
+        <i class="${starType} fa-star"></i>
+      </span>`;
+}
+
 
 /** Gets list of stories from server, generates their HTML, and puts on page. */
 
@@ -71,11 +97,74 @@ function putStoriesOnPage() {
   }
 
   $allStoriesList.show();
+  // add code to toggle favorites here 
 }
+
+function putUserStoriesOnPage() {
+  console.debug("putUserStoriesOnPage");
+
+  $ownStories.empty();
+
+  if (currentUser.ownStories.length === 0) {
+    $ownStories.append("<p>No stories added by user</p>")
+  } else if (currentUser.ownStories.length >= 1) {
+    for (let story of currentUser.ownStories) {
+      console.log("story here")
+      let $story = generateStoryMarkup(story, true)
+      $ownStories.append($story)
+    }
+  }
+  $ownStories.show();
+}
+
+function putFavoritesListOnPage() {
+  console.debug("putFavoritesListOnPage")
+
+  $favoritedStories.empty();
+
+  if (currentUser.favorites.length === 0) {
+    $favoritedStories.append("<p>No favorited stories!</p>")
+  } else {
+    for (let story of currentUser.favorites) {
+      console.log("story")
+      let $story = generateStoryMarkup(story)
+      $favoritedStories.append($story)
+    }
+  }
+  $favoritedStories.show();
+}
+
+async function deleteStory(evt) {
+  console.debug("deleteStory", evt);
+  const $closestLi = $(evt.target).closest("li")
+  const storyId = $closestLi.attr("id")
+
+  await storyList.removeStory(currentUser, storyId)
+
+  await putUserStoriesOnPage();
+}
+
+$ownStories.on("click", ".trash-can", deleteStory)
 
 async function toggleStoryFavorite(evt) {
   console.debug("togglestoryfavorite")
 
   const $tgt = $(evt.target);
   const $closestLi = $tgt.closest("li")
+  const storyId = $closestLi.attr("id")
+  const story = storyList.stories.find(s => s.storyId === storyId)
+
+  //add and remove favorites
+  if ($tgt.hasClass("fas")) {
+    await currentUser.removeFavorite(story)
+    $tgt.closest("i").toggleClass("fas far")
+    // needs to happen on the models/API side
+    //1) Remove story from users favorites array
+    //2) Remove story from users favorited stories on API site 
+  } else {
+    await currentUser.addFavorite(story)
+    $tgt.closest("i").toggleClass("fas far")
+  }
 }
+
+$storiesList.on("click", ".star", toggleStoryFavorite)

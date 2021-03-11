@@ -18,20 +18,43 @@ $body.on("click", "#nav-all", navAllStories);
 
 function navSubmitStoryClick(evt) {
   console.debug("navSubmitStoryClick", evt)
-  console.log("submit")
   hidePageComponents();
   $allStoriesList.show();
   $submitForm.show();
 }
 
+$navSubmitStory.on("click", navSubmitStoryClick)
+
+function navFavoritesClick(evt) {
+  console.debug("navFavoritesClick", evt)
+  hidePageComponents();
+  putFavoritesListOnPage();
+}
+$body.on("click", "#nav-favorites", navFavoritesClick)
+
+function navMyStories(evt) {
+  console.debug("navMyStories", evt)
+  hidePageComponents();
+  putUserStoriesOnPage();
+}
+
+$body.on("click", "#nav-my-stories", navMyStories)
+
 function navLoginClick(evt) {
   console.debug("navLoginClick", evt);
   hidePageComponents();
-  $loginForm.show();
-  $signupForm.show();
+  $userProfile.show();
 }
 
 $navLogin.on("click", navLoginClick);
+
+function navProfileClick(evt) {
+  console.debug("navProfileClick", evt);
+  hidePageComponents();
+  $userProfile.show();
+}
+
+$navUserProfile.on("click", navProfileClick);
 
 /** When a user first logins in, update the navbar to reflect that. */
 
